@@ -4,6 +4,6 @@ COPY pom.xml /home/app
 RUN mvn -f /home/app/pom.xml clean package -DskipTests
 
 FROM openjdk:11-jre-slim
-COPY --from=build /home/app/target/crypto-whale-initializer-0.0.1-SNAPSHOT.jar /usr/local/lib/crypto-whale-initializer.jar
+COPY --from=build /home/app/target/crypto-whale-viewer-0.0.1-SNAPSHOT.jar /usr/local/lib/crypto-whale-initializer.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/usr/local/lib/crypto-whale-initializer.jar"]

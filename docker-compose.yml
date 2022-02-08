@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  crypto-whale-initializer:
+    container_name: crypto-whale-initializer
+    build: ./
+    network_mode: "host"
