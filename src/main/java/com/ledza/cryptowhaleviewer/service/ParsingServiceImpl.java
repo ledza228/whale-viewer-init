@@ -4,6 +4,7 @@ import com.ledza.cryptowhaleviewer.entity.Coin;
 import com.ledza.cryptowhaleviewer.entity.OperationType;
 import com.ledza.cryptowhaleviewer.entity.Transaction;
 import com.ledza.cryptowhaleviewer.entity.TransactionRoute;
+import com.ledza.cryptowhaleviewer.exceptions.FloodException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,13 +17,20 @@ public class ParsingServiceImpl implements ParsingService{
 
     @Override
     public Transaction parse(String htmlText) {
+
+        if (htmlText.contains("Channel with username @whalebotalerts not found")){
+            throw new FloodException("Flooding detected");
+        }
+
+        if (!htmlText.contains("TX - link")) {
+            return null;
+        }
+
         Document doc = Jsoup.parse(htmlText);
         Element textElement = doc.select("div.tgme_widget_message_text").first();
         Element dateElement = doc.select("time").first();
 
-        if (!textElement.text().contains("TX - link")){
-            return null;
-        }
+
         String htmlMainText = textElement.select("pre").html();
         int mainTextStart = htmlMainText.lastIndexOf("</i>");
         mainTextStart = mainTextStart == -1 ? 0 : mainTextStart + 5;

@@ -4,6 +4,7 @@ import com.ledza.cryptowhaleviewer.entity.Coin;
 import com.ledza.cryptowhaleviewer.entity.OperationType;
 import com.ledza.cryptowhaleviewer.entity.Transaction;
 import com.ledza.cryptowhaleviewer.entity.TransactionRoute;
+import com.ledza.cryptowhaleviewer.exceptions.FloodException;
 import com.ledza.cryptowhaleviewer.repository.CoinRepository;
 import com.ledza.cryptowhaleviewer.repository.OperationTypeRepository;
 import com.ledza.cryptowhaleviewer.repository.TransactionRepository;
@@ -90,42 +91,42 @@ public class TransactionService {
 
     @Scheduled(fixedDelay = 1000*60*20)
     public void findingTransactions() throws InterruptedException {
+
         initPostId();
         List<Transaction> transactions = new ArrayList<>();
-        String post = nextPost();
-        while (true) {
-            Thread.sleep(100);
+
+        String post = currentPost();
+        while (parsingService.isExist(post)){
+            Transaction transaction;
+
             try {
-                if (parsingService.isExist(post)) {
-                    Transaction transaction = parsingService.parse(post);
-                    if (transaction == null) {
-                        post = nextPost();
-                        continue;
-                    }
-                    transaction.setId(currentPostId);
-                    transactions.add(transaction);
-                    if (transactions.size() > 30) {
-                        addTransactions(transactions);
-                        transactions.clear();
-                    }
-                    System.out.println(transaction);
-                } else {
-                    System.out.println("THERE IS NO SUCH POST YET");
-                    currentPostId--;
-                    break;
-                }
+                transaction = parsingService.parse(post);
             }
-            catch (Exception e){
-                System.out.println("WAS NULL POINTER EXCEPTION");
+            catch (FloodException e){
+                System.out.println(e.getMessage());
                 Thread.sleep(10000);
                 post = currentPost();
                 continue;
             }
+
+            if (transaction != null){
+                transaction.setId(currentPostId);
+                transactions.add(transaction);
+                System.out.println(transaction);
+            }
+
+            if (transactions.size() > 30) {
+                addTransactions(transactions);
+                transactions.clear();
+            }
+            Thread.sleep(100);
+
             post = nextPost();
         }
 
         addTransactions(transactions);
     }
+
 
     private String nextPost(){
         return TelegramRequestUtil.getPostText(++currentPostId);
